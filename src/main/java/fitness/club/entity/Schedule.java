@@ -1,5 +1,6 @@
 package fitness.club.entity;
 
+import fitness.club.repository.ScheduleRepository;
 import fitness.club.util.Column;
 import fitness.club.util.Table;
 import lombok.Builder;
@@ -11,6 +12,9 @@ import java.time.LocalDate;
 @Builder
 @Table(name = "schedule", schema = "fitness_club")
 public class Schedule extends BaseEntity{
+
+    public static ScheduleRepository provider = new ScheduleRepository();
+
     @Column(name = "client_id")
     private Integer clientId;
     @Column(name = "coach_id")

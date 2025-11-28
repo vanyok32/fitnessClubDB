@@ -24,6 +24,11 @@ public class CoachRepository extends BaseRepositoryImpl<Coach, Integer> {
             select id, club_id, name, email from fitness_club.coach c
             join fitness_club.trainer_specialization ts on c.id = ts.coach_id
             where c.club_id = ? AND ts.spec_id = ?""";
+    private final String FIND_COACHES_BY_CLUB= """
+            select id, club_id, name, email from fitness_club.coach c
+            join fitness_club.trainer_specialization ts on c.id = ts.coach_id
+            where c.club_id = ?""";
+
 
     public CoachRepository() {super(Coach.class);}
     public List<Coach> findCoachesBySpecIdClubId(Integer specId, Integer clubId) {
@@ -31,6 +36,21 @@ public class CoachRepository extends BaseRepositoryImpl<Coach, Integer> {
              var statement = connection.prepareStatement(FIND_COACHES_BY_SPEC_ID_CLUB_ID)) {
             statement.setObject(1, clubId);
             statement.setObject(2, specId);
+            var rs = statement.executeQuery();
+            var list = new ArrayList<Coach>();
+            while (rs.next()) {
+                list.add(mapResultSetToEntity(rs));
+            }
+            return list;
+        } catch (SQLException e) {
+            throw new RepositoryException(e.getMessage());
+        }
+    }
+
+    public List<Coach> findCoachesByClubId(Integer clubId) {
+        try (var connection = ConnectionManager.get();
+             var statement = connection.prepareStatement(FIND_COACHES_BY_CLUB)) {
+            statement.setObject(1, clubId);
             var rs = statement.executeQuery();
             var list = new ArrayList<Coach>();
             while (rs.next()) {

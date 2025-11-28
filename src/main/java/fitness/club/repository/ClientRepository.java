@@ -22,7 +22,7 @@ public class ClientRepository extends BaseRepositoryImpl<Client, Integer> {
 
     private final String GET_BY_ID_SQL = """
             select id, name, email, club_id from
-            fitness_club.client where id = ?;""";
+            fitness_club.client where id = ?""";
 
     private final String DELETE_SQL = """
             delete from fitness_club.client
@@ -37,11 +37,15 @@ public class ClientRepository extends BaseRepositoryImpl<Client, Integer> {
 
     private final String FIND_BY_CLUB_ID = """
             select * from fitness_club.client where club_id = ?""";
+    private final String FIND_BY_EMAIL = """
+            select id, name, email, club_id from
+            fitness_club.client where email = ?""";
 
     public List<Client> findClientsByClubId(Integer clubId) {
         try (var connection = ConnectionManager.get();
-            var statement = connection.prepareStatement(FIND_BY_CLUB_ID);
-            var rs = statement.executeQuery()) {
+            var statement = connection.prepareStatement(FIND_BY_CLUB_ID)) {
+            statement.setObject(1, clubId);
+            var rs = statement.executeQuery();
             logger.debug(statement.toString());
             var list = new ArrayList<Client>();
             while (rs.next()) {
@@ -51,6 +55,20 @@ public class ClientRepository extends BaseRepositoryImpl<Client, Integer> {
         } catch (SQLException e) {
             throw new RepositoryException(e.getMessage());
         }
+    }
+    public Optional<Client> findByEmail(String email) {
+        try (var connection = ConnectionManager.get();
+             var statement = connection.prepareStatement(FIND_BY_EMAIL);) {
+            statement.setObject(1, email);
+            var rs = statement.executeQuery();
+            logger.debug(statement.toString());
+            if (rs.next()) {
+                return Optional.of(mapResultSetToEntity(rs));
+            }
+        } catch (SQLException e) {
+            throw new RepositoryException(e.getMessage());
+        }
+        return Optional.empty();
     }
 
     public ClientRepository() {super(Client.class);}

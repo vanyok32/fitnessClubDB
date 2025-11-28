@@ -17,10 +17,10 @@ public class CoachSpecializationRepository extends BaseRepositoryWithoutId<Coach
     private static final String SELECT_ALL = """
             SELECT coach_id, spec_id FROM fitness_club.trainer_specialization""";
     private static final String SELECT_BY_ID = """
-            SELECT coach_id, spec_id FROM fitness_club.trainer_specialization 
+            SELECT coach_id, spec_id FROM fitness_club.trainer_specialization
             WHERE coach_id = ? AND spec_id = ?""";
     private static final String INSERT = """
-            INSERT INTO fitness_club.trainer_specialization (coach_id, spec_id) 
+            INSERT INTO fitness_club.trainer_specialization (coach_id, spec_id)
             VALUES (?, ?)""";
     private static final String DELETE_BY_ID = """
             DELETE FROM fitness_club.trainer_specialization WHERE coach_id = ?
@@ -82,9 +82,9 @@ public class CoachSpecializationRepository extends BaseRepositoryWithoutId<Coach
 
     @Override
     protected void setStatementParametersForUpdate(PreparedStatement statement, CoachSpecialization entity) throws SQLException {
-        // Update не поддерживается
+        // Update не поддерживается хз лень думать
     }
-
+    //тоже самое пока так прокину и все :В (никогда не поменяю уже)
     @Override
     protected Field getPkField() {
         throw new UnsupportedOperationException("Composite key");

@@ -1,5 +1,7 @@
 package fitness.club.entity;
 
+import fitness.club.repository.BaseRepository;
+import fitness.club.repository.ClientRepository;
 import fitness.club.util.Column;
 import fitness.club.util.Table;
 import lombok.Builder;
@@ -10,6 +12,9 @@ import lombok.RequiredArgsConstructor;
 @Data
 @Table(name = "client", schema = "fitness_club")
 public class Client extends BaseEntity{
+
+    public static final ClientRepository provider = new ClientRepository();
+
     @Column(name = "club_id")
     private Integer clubId;
     @Column(name = "name")

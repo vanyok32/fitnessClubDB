@@ -3,13 +3,17 @@ package fitness.club.entity;
 import fitness.club.repository.MembershipRepository;
 import fitness.club.util.Column;
 import fitness.club.util.Table;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 @Data
 @Table(name = "membership", schema = "fitness_club")
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Membership {
 
     public static MembershipRepository provider = new MembershipRepository();

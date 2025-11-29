@@ -3,13 +3,13 @@ package fitness.club.entity;
 import fitness.club.repository.ScheduleRepository;
 import fitness.club.util.Column;
 import fitness.club.util.Table;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDate;
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "schedule", schema = "fitness_club")
 public class Schedule extends BaseEntity{
 

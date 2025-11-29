@@ -4,12 +4,12 @@ import fitness.club.repository.ClubRepository;
 import fitness.club.repository.CoachRepository;
 import fitness.club.util.Column;
 import fitness.club.util.Table;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Builder
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "coach", schema = "fitness_club")
 public class Coach extends BaseEntity{
 

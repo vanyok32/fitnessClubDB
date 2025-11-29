@@ -3,12 +3,12 @@ package fitness.club.entity;
 import fitness.club.repository.WorkoutRepository;
 import fitness.club.util.Column;
 import fitness.club.util.Table;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "workout", schema = "fitness_club")
 public class Workout extends BaseEntity{
 

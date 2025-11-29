@@ -3,13 +3,12 @@ package fitness.club.entity;
 import fitness.club.repository.CoachSpecializationRepository;
 import fitness.club.util.Column;
 import fitness.club.util.Table;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Data
-@RequiredArgsConstructor
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Table(name = "Trainer_specialization", schema = "fitness_club")
 public class CoachSpecialization {
 

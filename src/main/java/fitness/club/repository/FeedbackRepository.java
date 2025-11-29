@@ -5,7 +5,7 @@ import fitness.club.entity.Feedback;
 public class FeedbackRepository extends BaseRepositoryWithoutId<Feedback, Integer> {
 
     private final String ADD_SQL = """
-            INSERT INTO fitness_club.feedback (schedule_id, feedback) VALUES(?, ?)""";
+            INSERT INTO fitness_club.feedback (schedule_id, rating, comment) VALUES(?, ?, ?)""";
     private final String SELECT_ALL_SQL = """
             SELECT schedule_id, rating, comment FROM fitness_club.feedback""";
     private final String SELECT_BY_ID_SQL = """

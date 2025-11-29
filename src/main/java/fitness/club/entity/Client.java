@@ -4,10 +4,10 @@ import fitness.club.repository.BaseRepository;
 import fitness.club.repository.ClientRepository;
 import fitness.club.util.Column;
 import fitness.club.util.Table;
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @Data
 @Table(name = "client", schema = "fitness_club")

@@ -4,7 +4,7 @@ import fitness.club.util.Column;
 import lombok.*;
 
 @Data
-@Builder
+
 @RequiredArgsConstructor
 
 public abstract class BaseEntity {

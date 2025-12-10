@@ -34,7 +34,7 @@ public class WorkoutService {
 
     public WorkoutResponseDto update(WorkoutRequestDto workout, Integer id) {
         Workout w = mapper.toEntity(workout);
-        w.setId(w.getId());
+        w.setId(id);
         return mapper.toResponseDto(Workout.provider.update(w));
     }
 }

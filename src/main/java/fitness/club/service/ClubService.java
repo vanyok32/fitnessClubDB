@@ -34,4 +34,8 @@ public class ClubService {
                 .map(clubMapper::toResponseDto)
                 .orElseThrow(() -> new ServiceException("Club with id " + clubId + " not found"));
     }
+    public ClubResponseDto save(ClubRequestDto requestDto) {
+        Club club = clubMapper.toEntity(requestDto);
+        return clubMapper.toResponseDto(Club.provider.add(club));
+    }
 }

@@ -17,6 +17,7 @@
           <element id="library" level="project" name="Maven: com.auth0:java-jwt:4.5.0" />
         </element>
       </element>
+      <element id="dir-copy" path="$PROJECT_DIR$/src/main/webapp" />
     </root>
   </artifact>
 </component>

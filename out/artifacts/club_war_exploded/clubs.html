@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Клубы - Fitness Club</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container">
+        <h1 class="logo">Fitness Club</h1>
+        <ul class="nav-menu">
+            <li><a href="index.html">Главная</a></li>
+            <li><a href="clubs.html" class="active">Клубы</a></li>
+            <li><a href="coaches.html">Тренеры</a></li>
+            <li><a href="schedules.html">Расписание</a></li>
+            <li><a href="workouts.html">Тренировки</a></li>
+            <li><a href="login.html">Вход</a></li>
+        </ul>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-header">
+        <h2>Клубы</h2>
+        <button class="btn" onclick="openEditModal()">Добавить клуб</button>
+    </div>
+
+    <div id="message-container"></div>
+
+    <div class="table-container">
+        <table id="clubs-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Адрес</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="clubs-tbody">
+            <tr>
+                <td colspan="4" class="loading">Загрузка...</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- Modal для редактирования -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h3 id="modal-title">Добавить клуб</h3>
+        <form id="club-form">
+            <input type="hidden" id="club-id">
+            <div class="form-group">
+                <label for="club-name">Название:</label>
+                <input type="text" id="club-name" required>
+            </div>
+            <div class="form-group">
+                <label for="club-address">Адрес:</label>
+                <input type="text" id="club-address" required>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn">Сохранить</button>
+                <button type="button" class="btn" onclick="closeEditModal()">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2024 Fitness Club. Все права защищены.</p>
+    </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/clubs.js"></script>
+</body>
+</html>
+

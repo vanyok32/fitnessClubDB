@@ -4,6 +4,8 @@ import fitness.club.exeptions.RepositoryException;
 import fitness.club.repository.BaseRepository;
 import fitness.club.util.Column;
 import fitness.club.util.ConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.sql.*;
@@ -14,6 +16,8 @@ import java.util.Optional;
 public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseRepository<T, Integer> {
 
     protected final Class<T> entityClass;
+
+    private final Logger logger = LoggerFactory.getLogger(BaseRepositoryWithoutId.class);
 
     public BaseRepositoryWithoutId(Class<T> entityClass) {
         this.entityClass = entityClass;
@@ -31,6 +35,7 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(sql)) {
             statement.setObject(1, id);
+            logger.debug(statement.toString());
             var rs = statement.executeQuery();
             if (rs.next()) {
                 return Optional.of(mapResultSetToEntity(rs));
@@ -45,8 +50,9 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
     public List<T> findAll() {
         String sql = getSelectAllSQL();
         try (var connection = ConnectionManager.get();
-             var statement = connection.prepareStatement(sql);
-             var rs = statement.executeQuery()) {
+             var statement = connection.prepareStatement(sql)) {
+            var rs = statement.executeQuery();
+            logger.debug(statement.toString());
             var list = new ArrayList<T>();
             while (rs.next()) {
                 list.add(mapResultSetToEntity(rs));
@@ -63,6 +69,7 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(sql)) {
             setStatementParameters(statement, entity);
+            logger.debug(statement.toString());
             statement.executeUpdate();
         } catch (Exception e) {
             throw new RepositoryException(e.getMessage());
@@ -76,6 +83,7 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(sql)) {
             setStatementParametersForUpdate(statement, entity);
+            logger.debug(statement.toString());
             int rows = statement.executeUpdate();
             if (rows == 0) {
                 throw new RuntimeException("Entity not found for update: " + entity);
@@ -92,6 +100,7 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(sql)) {
             statement.setObject(1, id);
+            logger.debug(statement.toString());
             int rows = statement.executeUpdate();
             if (rows == 0) {
                 throw new RuntimeException("Entity not found for deletion: " + id);

@@ -25,8 +25,10 @@ public class ScheduleService {
         return scheduleMapper.toResponseDto(Schedule.provider.add(scheduleMapper.toEntity(schedule)));
     }
 
-    public ScheduleResponseDto update(ScheduleRequestDto schedule) {
-        return scheduleMapper.toResponseDto(Schedule.provider.update(scheduleMapper.toEntity(schedule)));
+    public ScheduleResponseDto update(ScheduleRequestDto schedule, Integer id) {
+        Schedule scheduleEntity = scheduleMapper.toEntity(schedule);
+        scheduleEntity.setId(id);
+        return scheduleMapper.toResponseDto(Schedule.provider.update(scheduleEntity));
     }
 
     public void delete(Integer id) {Schedule.provider.delete(id);}

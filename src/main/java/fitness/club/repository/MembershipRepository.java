@@ -3,6 +3,8 @@ package fitness.club.repository;
 import fitness.club.entity.Membership;
 import fitness.club.exeptions.RepositoryException;
 import fitness.club.util.ConnectionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.sql.Date;
 import java.sql.SQLException;
@@ -10,8 +12,11 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class MembershipRepository extends BaseRepositoryWithoutId<Membership, Integer> {
+
+    private final Logger logger = LoggerFactory.getLogger(MembershipRepository.class);
+
     private final String ADD_SQL = """
-            INSERT INTO fitness_club.membership (client_id, start_date, end_date, is_active) 
+            INSERT INTO fitness_club.membership (client_id, start_date, end_date, is_active)
             VALUES (?, ?, ?, ?)""";
     private final String DELETE_SQL = """
             DELETE FROM fitness_club.membership WHERE client_id = ?""";
@@ -32,6 +37,7 @@ public class MembershipRepository extends BaseRepositoryWithoutId<Membership, In
             membership.setStartDate(Date.valueOf(LocalDate.now()));
             membership.setEndDate(Date.valueOf(LocalDate.now().plusMonths(1)));
             setStatementParametersForUpdate(statement, membership);
+            logger.debug(statement.toString());
             int rows = statement.executeUpdate();
             if (rows == 0) {
                 throw new RuntimeException("Entity not found for update: " + membership);

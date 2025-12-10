@@ -1,6 +1,8 @@
 package fitness.club.service;
 
+import fitness.club.dto.clinetDto.ClientResponseDto;
 import fitness.club.dto.coachDto.CoachResponseDto;
+import fitness.club.entity.Client;
 import fitness.club.entity.Coach;
 import fitness.club.exeptions.ServiceException;
 import fitness.club.mapper.CoachMapper;
@@ -36,6 +38,11 @@ public class CoachService {
                 .stream()
                 .map(coachMapper::toResponseDto)
                 .collect(Collectors.toList());
+    }
+    public CoachResponseDto findByEmail(String email) {
+        return Coach.provider.findByEmail(email)
+                .map(coachMapper::toResponseDto)
+                .orElseThrow(() -> new ServiceException("Coach with email: " + email + " not found"));
     }
 
     public void delete(Integer id) {Coach.provider.delete(id);}

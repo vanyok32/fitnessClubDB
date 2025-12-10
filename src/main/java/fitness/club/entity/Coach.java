@@ -21,4 +21,6 @@ public class Coach extends BaseEntity{
     private  String name;
     @Column(name = "email")
     private  String email;
+    @Column(name = "password")
+    private String password;
 }

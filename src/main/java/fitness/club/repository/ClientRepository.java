@@ -16,12 +16,12 @@ public class ClientRepository extends BaseRepositoryImpl<Client, Integer> {
     private static final Logger logger = LoggerFactory.getLogger(ClientRepository.class);
 
     private final String ADD_SQL = """
-            insert into fitness_club.client (name, club_id, email) 
-            values (?, ?, ?);
+            insert into fitness_club.client (name, club_id, email, password)
+            values (?, ?, ?, ?);
             """;
 
     private final String GET_BY_ID_SQL = """
-            select id, name, email, club_id from
+            select id, name, email, club_id, password from
             fitness_club.client where id = ?""";
 
     private final String DELETE_SQL = """
@@ -30,7 +30,7 @@ public class ClientRepository extends BaseRepositoryImpl<Client, Integer> {
 
     private final String UPDATE_SQL = """
             update fitness_club.client set name=?, email=?,
-             club_id=? where id = ?""";
+             club_id=?, password = ? where id = ?""";
 
     private final String FIND_ALL_SQL = """
             select * from fitness_club.client""";
@@ -38,7 +38,7 @@ public class ClientRepository extends BaseRepositoryImpl<Client, Integer> {
     private final String FIND_BY_CLUB_ID = """
             select * from fitness_club.client where club_id = ?""";
     private final String FIND_BY_EMAIL = """
-            select id, name, email, club_id from
+            select id, name, email, club_id, password from
             fitness_club.client where email = ?""";
 
     public List<Client> findClientsByClubId(Integer clubId) {

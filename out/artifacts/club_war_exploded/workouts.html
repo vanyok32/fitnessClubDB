@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренировки - Fitness Club</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<nav class="navbar">
+    <div class="container">
+        <h1 class="logo">Fitness Club</h1>
+        <ul class="nav-menu">
+            <li><a href="index.html">Главная</a></li>
+            <li><a href="clubs.html">Клубы</a></li>
+            <li><a href="coaches.html">Тренеры</a></li>
+            <li><a href="schedules.html">Расписание</a></li>
+            <li><a href="workouts.html" class="active">Тренировки</a></li>
+            <li><a href="login.html">Вход</a></li>
+        </ul>
+    </div>
+</nav>
+
+<main class="container">
+    <div class="page-header">
+        <h2>Тренировки</h2>
+        <button class="btn" onclick="openEditModal()">Добавить тренировку</button>
+    </div>
+
+    <div id="message-container"></div>
+
+    <div class="table-container">
+        <table id="workouts-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Длительность (мин)</th>
+                <th>Действия</th>
+            </tr>
+            </thead>
+            <tbody id="workouts-tbody">
+            <tr>
+                <td colspan="4" class="loading">Загрузка...</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- Modal для редактирования -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h3 id="modal-title">Добавить тренировку</h3>
+        <form id="workout-form">
+            <input type="hidden" id="workout-id">
+            <div class="form-group">
+                <label for="workout-name">Название:</label>
+                <input type="text" id="workout-name" required>
+            </div>
+            <div class="form-group">
+                <label for="workout-duration">Длительность (минут):</label>
+                <input type="number" id="workout-duration" required min="1">
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn">Сохранить</button>
+                <button type="button" class="btn" onclick="closeEditModal()">Отмена</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer class="footer">
+    <div class="container">
+        <p>&copy; 2024 Fitness Club. Все права защищены.</p>
+    </div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/workouts.js"></script>
+</body>
+</html>
+

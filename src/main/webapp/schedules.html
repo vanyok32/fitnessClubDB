@@ -34,9 +34,9 @@
             <thead>
             <tr>
                 <th>ID</th>
-                <th>ID Клиента</th>
-                <th>ID Тренера</th>
-                <th>ID Тренировки</th>
+                <th>Клиент</th>
+                <th>Тренер</th>
+                <th>Тренировка</th>
                 <th>Дата</th>
                 <th>Действия</th>
             </tr>
@@ -57,16 +57,22 @@
         <h3 id="modal-title">Добавить запись в расписание</h3>
         <form id="schedule-form">
             <div class="form-group">
-                <label for="schedule-client-id">ID Клиента:</label>
-                <input type="number" id="schedule-client-id" required>
+                <label for="schedule-client-id">Клиент:</label>
+                <select id="schedule-client-id" required>
+                    <option value="">Выберите клиента</option>
+                </select>
             </div>
             <div class="form-group">
-                <label for="schedule-coach-id">ID Тренера:</label>
-                <input type="number" id="schedule-coach-id" required>
+                <label for="schedule-coach-id">Тренер:</label>
+                <select id="schedule-coach-id" required>
+                    <option value="">Выберите тренера</option>
+                </select>
             </div>
             <div class="form-group">
-                <label for="schedule-workout-id">ID Тренировки:</label>
-                <input type="number" id="schedule-workout-id" required>
+                <label for="schedule-workout-id">Тренировка:</label>
+                <select id="schedule-workout-id" required>
+                    <option value="">Выберите тренировку</option>
+                </select>
             </div>
             <div class="form-group">
                 <label for="schedule-date">Дата:</label>
@@ -86,8 +92,11 @@
     </div>
 </footer>
 
+<script src="js/utils.js"></script>
 <script src="js/api.js"></script>
 <script src="js/schedules.js"></script>
 </body>
 </html>
+
+
 

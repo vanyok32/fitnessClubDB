@@ -9,13 +9,13 @@ public class ClientMapper implements BaseMapper<ClientRequestDto, ClientResponse
     @Override
     public Client toEntity(ClientRequestDto dto) {
         return Client.builder().email(dto.getEmail())
-                .name(dto.getName()).clubId(dto.getClubId()).build();
+                .name(dto.getName()).clubId(dto.getClubId()).password(dto.getPassword()).build();
     }
 
     @Override
     public ClientResponseDto toResponseDto(Client cl) {
         return ClientResponseDto.builder().id(cl.getId())
-                .clubId(cl.getClubId()).email(cl.getEmail())
+                .clubId(cl.getClubId()).email(cl.getEmail()).password(cl.getPassword())
                 .name(cl.getName()).build();
     }
 }

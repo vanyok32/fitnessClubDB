@@ -54,6 +54,7 @@ public class ScheduleRepository extends BaseRepositoryImpl<Schedule, Integer> {
         }
     }
 
+
     public ScheduleRepository() {super(Schedule.class);}
 
     @Override

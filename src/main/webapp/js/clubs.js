@@ -89,6 +89,7 @@ document.getElementById('club-form').addEventListener('submit', async (e) => {
             await clubsApi.update(editingId, clubData);
             showMessage('Клуб успешно обновлен');
         } else {
+            await clubsApi.create(clubData);
             showMessage('Клуб успешно создан');
         }
         closeEditModal();
@@ -108,4 +109,6 @@ window.onclick = function(event) {
 
 // Загрузка при загрузке страницы
 document.addEventListener('DOMContentLoaded', loadClubs);
+
+
 

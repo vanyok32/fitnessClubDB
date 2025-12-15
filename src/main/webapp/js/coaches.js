@@ -1,43 +1,83 @@
 let coaches = [];
 let clubs = [];
+let specializations = [];
+let coachSpecs = [];
 
-// Загрузка тренеров
-async function loadCoaches(clubId = null) {
-    try {
-        if (clubId) {
-            coaches = await coachesApi.getByClub(clubId);
-        } else {
-            coaches = await coachesApi.getAll();
+const clubMap = new Map();
+const specMap = new Map();
+const coachSpecMap = new Map(); // coachId -> [spec names]
+
+async function loadReferenceData() {
+    const [clubsData, specsData, coachSpecsData] = await Promise.all([
+        clubsApi.getAll(),
+        specializationsApi.getAll(),
+        coachSpecializationsApi.getAll()
+    ]);
+    clubs = clubsData || [];
+    specializations = specsData || [];
+    coachSpecs = coachSpecsData || [];
+    rebuildMaps();
+    fillFilterSelects();
+}
+
+function rebuildMaps() {
+    clubMap.clear();
+    specMap.clear();
+    coachSpecMap.clear();
+
+    clubs.forEach(c => clubMap.set(c.id, c));
+    specializations.forEach(s => specMap.set(s.id, s));
+
+    coachSpecs.forEach(pair => {
+        const name = specMap.get(pair.specId)?.name;
+        if (!name) return;
+        if (!coachSpecMap.has(pair.coachId)) {
+            coachSpecMap.set(pair.coachId, []);
         }
+        coachSpecMap.get(pair.coachId).push(name);
+    });
+}
+
+function fillFilterSelects() {
+    const clubSelect = document.getElementById('filter-club');
+    const specSelect = document.getElementById('filter-spec');
+    if (clubSelect) {
+        clubSelect.innerHTML = '<option value="">Все клубы</option>' +
+            clubs.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    }
+    if (specSelect) {
+        specSelect.innerHTML = '<option value="">Все специализации</option>' +
+            specializations.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    }
+}
+
+async function loadCoaches() {
+    try {
+        await loadReferenceData();
+        await fetchCoaches();
         renderCoaches();
     } catch (error) {
         showMessage('Ошибка при загрузке тренеров: ' + error.message, 'error');
     }
 }
 
-// Загрузка клубов для фильтра
-async function loadClubs() {
-    try {
-        clubs = await clubsApi.getAll();
-        const select = document.getElementById('club-filter');
-        select.innerHTML = '<option value="">Все клубы</option>' +
-            clubs.map(club => `<option value="${club.id}">${club.name}</option>`).join('');
-    } catch (error) {
-        console.error('Ошибка при загрузке клубов:', error);
-    }
+async function fetchCoaches() {
+    const clubId = document.getElementById('filter-club').value;
+    const specId = document.getElementById('filter-spec').value;
+    const sort = document.getElementById('sort-by').value;
+
+    coaches = await coachesApi.getAll({
+        clubId: clubId || undefined,
+        specId: specId || undefined,
+        sort
+    });
 }
 
-// Фильтрация тренеров по клубу
-function filterCoaches() {
-    const clubId = document.getElementById('club-filter').value;
-    loadCoaches(clubId || null);
-}
-
-// Отображение тренеров в таблице
 function renderCoaches() {
     const tbody = document.getElementById('coaches-tbody');
-    if (coaches.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5">Нет тренеров</td></tr>';
+    if (!tbody) return;
+    if (!coaches || coaches.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5">Тренеры не найдены</td></tr>';
         return;
     }
 
@@ -46,32 +86,17 @@ function renderCoaches() {
             <td>${coach.id}</td>
             <td>${coach.name}</td>
             <td>${coach.email}</td>
-            <td>${coach.clubId}</td>
-            <td class="actions">
-                <button class="btn btn-danger" onclick="deleteCoach(${coach.id})">Удалить</button>
-            </td>
+            <td>${clubMap.get(coach.clubId)?.name || coach.clubId || '-'}</td>
+            <td>${(coachSpecMap.get(coach.id) || []).join(', ') || '—'}</td>
         </tr>
     `).join('');
 }
 
-// Удаление тренера
-async function deleteCoach(id) {
-    if (!confirm('Вы уверены, что хотите удалить этого тренера?')) {
-        return;
-    }
-
-    try {
-        await coachesApi.delete(id);
-        showMessage('Тренер успешно удален');
-        loadCoaches();
-    } catch (error) {
-        showMessage('Ошибка при удалении тренера: ' + error.message, 'error');
-    }
+function applyFilters() {
+    fetchCoaches()
+        .then(renderCoaches)
+        .catch(error => showMessage('Не удалось применить фильтр: ' + error.message, 'error'));
 }
 
-// Загрузка при загрузке страницы
-document.addEventListener('DOMContentLoaded', () => {
-    loadClubs();
-    loadCoaches();
-});
+document.addEventListener('DOMContentLoaded', loadCoaches);
 

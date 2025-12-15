@@ -16,7 +16,7 @@ public class ClientRepository extends BaseRepositoryImpl<Client, Integer> {
     private static final Logger logger = LoggerFactory.getLogger(ClientRepository.class);
 
     private final String ADD_SQL = """
-            insert into fitness_club.client (name, club_id, email, password)
+            insert into fitness_club.client (club_id, name, email, password) 
             values (?, ?, ?, ?);
             """;
 
@@ -29,8 +29,8 @@ public class ClientRepository extends BaseRepositoryImpl<Client, Integer> {
             where id = ?""";
 
     private final String UPDATE_SQL = """
-            update fitness_club.client set name=?, email=?,
-             club_id=?, password = ? where id = ?""";
+            update fitness_club.client set club_id=?, name=?, email=?,
+             password=? where id = ?""";
 
     private final String FIND_ALL_SQL = """
             select * from fitness_club.client""";
@@ -43,7 +43,7 @@ public class ClientRepository extends BaseRepositoryImpl<Client, Integer> {
 
     public List<Client> findClientsByClubId(Integer clubId) {
         try (var connection = ConnectionManager.get();
-            var statement = connection.prepareStatement(FIND_BY_CLUB_ID)) {
+             var statement = connection.prepareStatement(FIND_BY_CLUB_ID)) {
             statement.setObject(1, clubId);
             var rs = statement.executeQuery();
             logger.debug(statement.toString());

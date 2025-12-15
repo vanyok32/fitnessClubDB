@@ -24,14 +24,35 @@
 <main class="container">
     <div class="page-header">
         <h2>Тренеры</h2>
-        <div>
-            <select id="club-filter" onchange="filterCoaches()">
-                <option value="">Все клубы</option>
-            </select>
-        </div>
     </div>
 
     <div id="message-container"></div>
+
+    <div class="filters">
+        <div class="form-group">
+            <label for="filter-club">Клуб:</label>
+            <select id="filter-club">
+                <option value="">Все клубы</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="filter-spec">Специализация:</label>
+            <select id="filter-spec">
+                <option value="">Все специализации</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="sort-by">Сортировка:</label>
+            <select id="sort-by">
+                <option value="id">По ID</option>
+                <option value="club">По клубу</option>
+                <option value="specialization">По специализации</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <button class="btn" onclick="applyFilters()">Применить</button>
+        </div>
+    </div>
 
     <div class="table-container">
         <table id="coaches-table">
@@ -40,8 +61,8 @@
                 <th>ID</th>
                 <th>Имя</th>
                 <th>Email</th>
-                <th>ID Клуба</th>
-                <th>Действия</th>
+                <th>Клуб</th>
+                <th>Специализации</th>
             </tr>
             </thead>
             <tbody id="coaches-tbody">
@@ -59,6 +80,7 @@
     </div>
 </footer>
 
+<script src="js/utils.js"></script>
 <script src="js/api.js"></script>
 <script src="js/coaches.js"></script>
 </body>

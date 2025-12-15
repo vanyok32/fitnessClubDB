@@ -4,8 +4,6 @@ import fitness.club.exeptions.RepositoryException;
 import fitness.club.repository.BaseRepository;
 import fitness.club.util.Column;
 import fitness.club.util.ConnectionManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.sql.*;
@@ -16,8 +14,6 @@ import java.util.Optional;
 public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseRepository<T, Integer> {
 
     protected final Class<T> entityClass;
-
-    private final Logger logger = LoggerFactory.getLogger(BaseRepositoryWithoutId.class);
 
     public BaseRepositoryWithoutId(Class<T> entityClass) {
         this.entityClass = entityClass;
@@ -35,7 +31,6 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(sql)) {
             statement.setObject(1, id);
-            logger.debug(statement.toString());
             var rs = statement.executeQuery();
             if (rs.next()) {
                 return Optional.of(mapResultSetToEntity(rs));
@@ -50,9 +45,8 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
     public List<T> findAll() {
         String sql = getSelectAllSQL();
         try (var connection = ConnectionManager.get();
-             var statement = connection.prepareStatement(sql)) {
-            var rs = statement.executeQuery();
-            logger.debug(statement.toString());
+             var statement = connection.prepareStatement(sql);
+             var rs = statement.executeQuery()) {
             var list = new ArrayList<T>();
             while (rs.next()) {
                 list.add(mapResultSetToEntity(rs));
@@ -69,7 +63,6 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(sql)) {
             setStatementParameters(statement, entity);
-            logger.debug(statement.toString());
             statement.executeUpdate();
         } catch (Exception e) {
             throw new RepositoryException(e.getMessage());
@@ -83,7 +76,6 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(sql)) {
             setStatementParametersForUpdate(statement, entity);
-            logger.debug(statement.toString());
             int rows = statement.executeUpdate();
             if (rows == 0) {
                 throw new RuntimeException("Entity not found for update: " + entity);
@@ -100,7 +92,6 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(sql)) {
             statement.setObject(1, id);
-            logger.debug(statement.toString());
             int rows = statement.executeUpdate();
             if (rows == 0) {
                 throw new RuntimeException("Entity not found for deletion: " + id);
@@ -113,13 +104,32 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
     protected T mapResultSetToEntity(ResultSet rs) throws SQLException {
         try {
             T entity = entityClass.getDeclaredConstructor().newInstance();
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            // Создаем набор доступных колонок для быстрой проверки
+            java.util.Set<String> availableColumns = new java.util.HashSet<>();
+            for (int i = 1; i <= columnCount; i++) {
+                availableColumns.add(metaData.getColumnName(i).toLowerCase());
+            }
+
             Field[] fields = entityClass.getDeclaredFields();
             for (Field field : fields) {
                 Column column = field.getAnnotation(Column.class);
                 if (column != null) {
-                    field.setAccessible(true); // ← Убедимся, что поле доступно
-                    Object value = rs.getObject(column.name());
-                    field.set(entity, value); // ← Ошибка может быть здесь
+                    field.setAccessible(true);
+                    String columnName = column.name().toLowerCase();
+
+                    // Проверяем наличие колонки в ResultSet
+                    if (availableColumns.contains(columnName)) {
+                        Object value = rs.getObject(column.name());
+                        // Normalize SQL types to Java types expected by entities (e.g., LocalDate)
+                        if (value instanceof java.sql.Date && field.getType().equals(java.time.LocalDate.class)) {
+                            value = ((java.sql.Date) value).toLocalDate();
+                        }
+                        field.set(entity, value);
+                    }
+                    // Если колонки нет в ResultSet, просто пропускаем её (оставляем значение по умолчанию)
                 }
             }
             return entity;
@@ -134,9 +144,13 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         for (Field field : fields) {
             Column column = field.getAnnotation(Column.class);
             if (column != null) {
-                field.setAccessible(true); // ← Убедимся, что поле доступно
+                field.setAccessible(true);
                 try {
                     Object value = field.get(entity);
+                    // Convert Java time to SQL-friendly types
+                    if (value instanceof java.time.LocalDate localDate) {
+                        value = java.sql.Date.valueOf(localDate);
+                    }
                     statement.setObject(index++, value);
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException("Cannot access field: " + field.getName(), e);
@@ -149,12 +163,16 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         Field[] fields = entityClass.getDeclaredFields();
         int index = 1;
         for (Field field : fields) {
-            field.setAccessible(true); // ← Убедимся, что поле доступно
+            field.setAccessible(true);
             Column column = field.getAnnotation(Column.class);
             if (column != null) {
                 try {
                     Object value = field.get(entity);
                     if (!column.name().equals(getPkFieldName())) { // skip PK
+                        // Convert Java time to SQL-friendly types
+                        if (value instanceof java.time.LocalDate localDate) {
+                            value = java.sql.Date.valueOf(localDate);
+                        }
                         statement.setObject(index++, value);
                     }
                 } catch (IllegalAccessException e) {
@@ -164,9 +182,10 @@ public abstract class BaseRepositoryWithoutId<T, Integer> implements BaseReposit
         }
         // Add PK as last parameter
         Field pkField = getPkField();
-        pkField.setAccessible(true); // ← Убедимся, что PK-поле доступно
+        pkField.setAccessible(true);
         try {
-            statement.setObject(index, pkField.get(entity));
+            Object pkValue = pkField.get(entity);
+            statement.setObject(index, pkValue);
         } catch (IllegalAccessException e) {
             throw new RuntimeException("Cannot access PK field: " + pkField.getName(), e);
         }

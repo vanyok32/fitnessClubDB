@@ -1,15 +1,14 @@
 package fitness.club.dto.clinetDto;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Data
-@RequiredArgsConstructor
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class ClientRequestDto {
-    private final Integer clubId;
-    private final String name;
-    private final String email;
-    private final String password;
+    private  Integer clubId;
+    private  String name;
+    private  String email;
+    private  String password;
 }

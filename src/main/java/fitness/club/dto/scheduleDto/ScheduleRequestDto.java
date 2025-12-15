@@ -1,14 +1,17 @@
 package fitness.club.dto.scheduleDto;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 @Data
 @Builder
+@AllArgsConstructor@NoArgsConstructor
 public class ScheduleRequestDto {
-    private final Integer clientId;
-    private final Integer coachId;
-    private final Integer workoutId;
-    private final LocalDate date;
+    private  Integer clientId;
+    private  Integer coachId;
+    private  Integer workoutId;
+    private  LocalDate date;
 }

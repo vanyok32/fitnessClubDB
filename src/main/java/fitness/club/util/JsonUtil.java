@@ -2,49 +2,31 @@ package fitness.club.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
-public class JsonUtil {
-    private static final ObjectMapper objectMapper = new ObjectMapper();
+public final class JsonUtil {
+    private static final ObjectMapper MAPPER = new ObjectMapper()
+            .registerModule(new JavaTimeModule());
 
-    static {
-        objectMapper.registerModule(new JavaTimeModule());
+    private JsonUtil() {}
+
+    public static <T> T read(HttpServletRequest request, Class<T> clazz) throws IOException {
+        try (InputStream is = request.getInputStream()) {
+            return MAPPER.readValue(is, clazz);
+        }
     }
 
-    public static <T> T readValue(String json, Class<T> clazz) throws IOException {
-        return objectMapper.readValue(json, clazz);
-    }
-
-    public static String writeValue(Object obj) throws IOException {
-        return objectMapper.writeValueAsString(obj);
-    }
-
-    public static void sendJsonResponse(HttpServletResponse response, Object obj) throws IOException {
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        PrintWriter out = response.getWriter();
-        out.print(writeValue(obj));
-        out.flush();
-    }
-
-    public static void sendErrorResponse(HttpServletResponse response, int status, String message) throws IOException {
+    public static void write(HttpServletResponse response, int status, Object body) throws IOException {
         response.setStatus(status);
         response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-
-        // Создаем объект для сериализации, чтобы избежать проблем с экранированием
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", message != null ? message : "Unknown error");
-
-        PrintWriter out = response.getWriter();
-        out.print(writeValue(errorResponse));
-        out.flush();
+        if (body != null) {
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.getWriter().write(MAPPER.writeValueAsString(body));
+        }
     }
 }
-
-

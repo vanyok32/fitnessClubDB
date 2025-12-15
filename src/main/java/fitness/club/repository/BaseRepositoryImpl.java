@@ -121,13 +121,31 @@ public abstract class BaseRepositoryImpl<T, Integer> implements BaseRepository<T
     protected T mapResultSetToEntity(ResultSet rs) throws SQLException {
         try {
             T entity = entityClass.getDeclaredConstructor().newInstance();
-            Field[] fields = entityClass.getDeclaredFields();
-            for (Field field : fields) {
+            ResultSetMetaData metaData = rs.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            // Создаем набор доступных колонок для быстрой проверки
+            java.util.Set<String> availableColumns = new java.util.HashSet<>();
+            for (int i = 1; i <= columnCount; i++) {
+                availableColumns.add(metaData.getColumnName(i).toLowerCase());
+            }
+
+            for (Field field : getAllFields()) {
                 Column column = field.getAnnotation(Column.class);
                 if (column != null) {
-                    field.setAccessible(true); // Убедимся, что поле доступно
-                    Object value = rs.getObject(column.name());
-                    field.set(entity, value);
+                    field.setAccessible(true);
+                    String columnName = column.name().toLowerCase();
+
+                    // Проверяем наличие колонки в ResultSet
+                    if (availableColumns.contains(columnName)) {
+                        Object value = rs.getObject(column.name());
+                        // Normalize SQL types to Java types expected by entities (e.g., LocalDate)
+                        if (value instanceof java.sql.Date && field.getType().equals(java.time.LocalDate.class)) {
+                            value = ((java.sql.Date) value).toLocalDate();
+                        }
+                        field.set(entity, value);
+                    }
+                    // Если колонки нет в ResultSet, просто пропускаем её (оставляем значение по умолчанию)
                 }
             }
             return entity;
@@ -137,17 +155,20 @@ public abstract class BaseRepositoryImpl<T, Integer> implements BaseRepository<T
     }
 
     protected void setStatementParameters(PreparedStatement statement, T entity, boolean excludeId) throws SQLException {
-        Field[] fields = entityClass.getDeclaredFields();
         int index = 1;
-        for (Field field : fields) {
+        for (Field field : getAllFields()) {
             Column column = field.getAnnotation(Column.class);
             if (column != null) {
-                if (excludeId && column.name().equalsIgnoreCase("id")) {
-                    continue; // skip ID on insert
+                if (column.name().equalsIgnoreCase("id")) {
+                    continue; // id задаём отдельно, чтобы он всегда был последним
                 }
-                field.setAccessible(true); // Убедимся, что поле доступно
+                field.setAccessible(true);
                 try {
                     Object value = field.get(entity);
+                    // Convert Java time to SQL-friendly types
+                    if (value instanceof java.time.LocalDate localDate) {
+                        value = java.sql.Date.valueOf(localDate);
+                    }
                     statement.setObject(index++, value);
                 } catch (IllegalAccessException e) {
                     throw new RuntimeException("Cannot access field: " + field.getName(), e);
@@ -156,9 +177,10 @@ public abstract class BaseRepositoryImpl<T, Integer> implements BaseRepository<T
         }
         if (!excludeId) {
             Field idField = getIdField();
-            idField.setAccessible(true); // Убедимся, что ID-поле доступно
+            idField.setAccessible(true);
             try {
-                statement.setObject(index, idField.get(entity));
+                Object idValue = idField.get(entity);
+                statement.setObject(index, idValue);
             } catch (IllegalAccessException e) {
                 throw new RuntimeException("Cannot access ID field: " + idField.getName(), e);
             }
@@ -166,7 +188,7 @@ public abstract class BaseRepositoryImpl<T, Integer> implements BaseRepository<T
     }
 
     protected Field getIdField() {
-        for (Field field : entityClass.getDeclaredFields()) {
+        for (Field field : getAllFields()) {
             field.setAccessible(true);
             Column col = field.getAnnotation(Column.class);
             if (col != null && col.name().equalsIgnoreCase("id")) {
@@ -174,5 +196,18 @@ public abstract class BaseRepositoryImpl<T, Integer> implements BaseRepository<T
             }
         }
         throw new RuntimeException("No field annotated as 'id' found in " + entityClass);
+    }
+
+    /**
+     * Собираем все поля сущности, включая те, что объявлены в родителях (например, id в BaseEntity).
+     */
+    private Field[] getAllFields() {
+        List<Field> fields = new ArrayList<>();
+        Class<?> current = entityClass;
+        while (current != null && current != Object.class) {
+            fields.addAll(List.of(current.getDeclaredFields()));
+            current = current.getSuperclass();
+        }
+        return fields.toArray(new Field[0]);
     }
 }

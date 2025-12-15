@@ -1,14 +1,59 @@
 let schedules = [];
 let editingSchedule = null;
+let clients = [];
+let coaches = [];
+let workouts = [];
 
-// Загрузка расписания
+const clientMap = new Map();
+const coachMap = new Map();
+const workoutMap = new Map();
+
+// Загрузка справочников и расписания
 async function loadSchedules() {
     try {
-        schedules = await schedulesApi.getAll();
+        const [clientsData, coachesData, workoutsData, schedulesData] = await Promise.all([
+            clientsApi.getAll(),
+            coachesApi.getAll(),
+            workoutsApi.getAll(),
+            schedulesApi.getAll()
+        ]);
+
+        clients = clientsData || [];
+        coaches = coachesData || [];
+        workouts = workoutsData || [];
+        schedules = schedulesData || [];
+
+        rebuildMaps();
+        fillSelects();
         renderSchedules();
     } catch (error) {
         showMessage('Ошибка при загрузке расписания: ' + error.message, 'error');
     }
+}
+
+function rebuildMaps() {
+    clientMap.clear();
+    coachMap.clear();
+    workoutMap.clear();
+
+    clients.forEach(c => clientMap.set(c.id, c));
+    coaches.forEach(c => coachMap.set(c.id, c));
+    workouts.forEach(w => workoutMap.set(w.id, w));
+}
+
+function fillSelects() {
+    fillSelect('schedule-client-id', clients, 'name');
+    fillSelect('schedule-coach-id', coaches, 'name');
+    fillSelect('schedule-workout-id', workouts, 'name');
+}
+
+function fillSelect(selectId, items, labelField) {
+    const select = document.getElementById(selectId);
+    if (!select) return;
+    const placeholder = select.querySelector('option')?.outerHTML || '<option value="">Выберите</option>';
+    select.innerHTML = placeholder + items
+        .map(item => `<option value="${item.id}">${item[labelField] || item.id}</option>`)
+        .join('');
 }
 
 // Отображение расписания в таблице
@@ -22,9 +67,9 @@ function renderSchedules() {
     tbody.innerHTML = schedules.map(schedule => `
         <tr>
             <td>${schedule.id}</td>
-            <td>${schedule.clientId}</td>
-            <td>${schedule.coachId}</td>
-            <td>${schedule.workoutId}</td>
+            <td>${getNameById(clientMap, schedule.clientId, 'клиент')}</td>
+            <td>${getNameById(coachMap, schedule.coachId, 'тренер')}</td>
+            <td>${getNameById(workoutMap, schedule.workoutId, 'тренировка')}</td>
             <td>${formatDate(schedule.date)}</td>
             <td class="actions">
                 <button class="btn" onclick="editSchedule(${schedule.id})">Редактировать</button>
@@ -32,6 +77,11 @@ function renderSchedules() {
             </td>
         </tr>
     `).join('');
+}
+
+function getNameById(map, id, fallbackLabel) {
+    const entity = map.get(id);
+    return entity ? entity.name : `ID ${id || ''} (${fallbackLabel})`;
 }
 
 // Открытие модального окна для редактирования
@@ -87,6 +137,11 @@ document.getElementById('schedule-form').addEventListener('submit', async (e) =>
         workoutId: parseInt(document.getElementById('schedule-workout-id').value),
         date: document.getElementById('schedule-date').value
     };
+
+    if (!scheduleData.clientId || !scheduleData.coachId || !scheduleData.workoutId) {
+        showMessage('Выберите клиента, тренера и тренировку', 'error');
+        return;
+    }
 
     try {
         if (editingSchedule) {

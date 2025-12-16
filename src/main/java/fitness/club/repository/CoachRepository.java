@@ -32,7 +32,24 @@ public class CoachRepository extends BaseRepositoryImpl<Coach, Integer> {
             join fitness_club.trainer_specialization ts on c.id = ts.coach_id
             where ts.spec_id = ?""";
 
-
+    private final String WITH_FILTERS_SQL = """
+            SELECT
+                c.id,
+                c.club_id,
+                c.name,
+                c.email,
+                STRING_AGG(s.name, ', ' ORDER BY s.name) AS specializations -- Агрегация специализаций
+            FROM fitness_club.coach c
+            LEFT JOIN fitness_club.trainer_specialization ts ON c.id = ts.coach_id
+            LEFT JOIN fitness_club.specialization s ON ts.spec_id = s.id
+            WHERE ...
+            GROUP BY c.id, c.club_id, c.name, c.email -- Группировка по основным полям
+            ORDER BY
+                CASE
+                    WHEN ? = 'specialization' THEN STRING_AGG(s.name, ', ' ORDER BY s.name)
+                    WHEN ? = 'club' THEN c.club_id::TEXT -- Приведение к строке для CASE
+                    ELSE c.id::TEXT
+                END;""";
     public CoachRepository() {super(Coach.class);}
     public List<Coach> findCoachesBySpecIdClubId(Integer specId, Integer clubId) {
         try (var connection = ConnectionManager.get();
@@ -79,47 +96,62 @@ public class CoachRepository extends BaseRepositoryImpl<Coach, Integer> {
             throw new RepositoryException(e.getMessage());
         }
     }
+
     public List<Coach> findWithFilters(Integer clubId, Integer specId, String sortBy) {
         StringBuilder sql = new StringBuilder("""
-                select distinct c.id, c.club_id, c.name, c.email
-                from fitness_club.coach c""");
-        boolean joinSpec = specId != null || "specialization".equalsIgnoreCase(sortBy);
-        if (joinSpec) {
-            sql.append(" left join fitness_club.trainer_specialization ts on c.id = ts.coach_id");
-        }
-        if ("specialization".equalsIgnoreCase(sortBy)) {
-            sql.append(" left join fitness_club.specialization s on ts.spec_id = s.id");
-        }
-        sql.append(" where 1=1");
+        SELECT
+            c.id, 
+            c.name, 
+            c.email, 
+            c.club_id 
+        FROM fitness_club.coach c
+        WHERE 1=1
+        """);
+
         List<Object> params = new ArrayList<>();
+
+        // Фильтр по клубу
         if (clubId != null) {
-            sql.append(" and c.club_id = ?");
+            sql.append(" AND c.club_id = ?");
             params.add(clubId);
         }
+        // Фильтр по специализации
         if (specId != null) {
-            sql.append(" and ts.spec_id = ?");
+            sql.append("""
+             AND EXISTS (
+                 SELECT 1 
+                 FROM fitness_club.trainer_specialization ts 
+                 WHERE ts.coach_id = c.id 
+                   AND ts.spec_id = ?
+             )
+            """);
             params.add(specId);
         }
-        sql.append(" order by ");
-        if ("specialization".equalsIgnoreCase(sortBy)) {
-            sql.append("s.name nulls last, c.name");
-        } else if ("club".equalsIgnoreCase(sortBy)) {
-            sql.append("c.club_id, c.name");
+
+        // Сортировка
+        sql.append(" ORDER BY ");
+        if ("club".equalsIgnoreCase(sortBy)) {
+            sql.append(" c.club_id NULLS LAST, c.name");
+        } else if ("specialization".equalsIgnoreCase(sortBy)) {
+            sql.append(" c.name");
         } else {
-            sql.append("c.id");
+            sql.append(" c.id");
         }
 
         try (var connection = ConnectionManager.get();
              var statement = connection.prepareStatement(sql.toString())) {
+
             for (int i = 0; i < params.size(); i++) {
                 statement.setObject(i + 1, params.get(i));
             }
+
             var rs = statement.executeQuery();
             var list = new ArrayList<Coach>();
             while (rs.next()) {
-                list.add(mapResultSetToEntity(rs));
+                list.add(mapResultSetToEntity(rs));  // этот метод остаётся без изменений
             }
             return list;
+
         } catch (SQLException e) {
             throw new RepositoryException(e.getMessage());
         }

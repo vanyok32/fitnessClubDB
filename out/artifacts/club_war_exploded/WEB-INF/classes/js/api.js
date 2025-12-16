@@ -59,7 +59,8 @@ const workoutsApi = createCrudApi('/api/workouts');
 const clientsApi = createCrudApi('/api/clients');
 const specializationsApi = createCrudApi('/api/specializations');
 const coachSpecializationsApi = createCrudApi('/api/coach-specializations');
-
+const clientWorkoutsApi = createCrudApi('api/client/workouts');
+const membershipsApi = createCrudApi('/api/memberships');
 const authApi = {
     async login(email, password) {
         return request('/api/auth/login', {method: 'POST', data: {email, password}});

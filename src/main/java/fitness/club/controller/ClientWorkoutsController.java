@@ -15,17 +15,22 @@ public class ClientWorkoutsController extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String clientIdParam = req.getParameter("clientId");
-        if (clientIdParam == null || clientIdParam.isBlank()) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Client id is required");
+        String pathInfo = req.getPathInfo(); // например, "/5" или null
+
+        if (pathInfo == null || pathInfo.equals("/") || pathInfo.isBlank()) {
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Client ID is required in path");
             return;
         }
+
+        String clientIdStr = pathInfo.substring(1); // убираем ведущий слеш
         try {
-            int clientId = Integer.parseInt(clientIdParam);
-            JsonUtil.write(resp, HttpServletResponse.SC_OK, scheduleService.findByClientId(clientId));
+            int clientId = Integer.parseInt(clientIdStr);
+            var workouts = scheduleService.findByClientId(clientId);
+            JsonUtil.write(resp, HttpServletResponse.SC_OK, workouts);
         } catch (NumberFormatException e) {
-            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid client id");
+            resp.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid client ID format");
+        } catch (Exception e) {
+            resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error fetching workouts");
         }
     }
 }
-

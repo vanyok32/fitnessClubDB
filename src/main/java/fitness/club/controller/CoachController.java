@@ -1,6 +1,7 @@
 package fitness.club.controller;
 
 import fitness.club.dto.coachDto.CoachRequestDto;
+import fitness.club.service.ClubService;
 import fitness.club.service.CoachService;
 import fitness.club.util.JsonUtil;
 import jakarta.servlet.annotation.WebServlet;
@@ -14,7 +15,6 @@ import java.util.Optional;
 @WebServlet("/api/coaches/*")
 public class CoachController extends HttpServlet {
     private final CoachService coachService = new CoachService();
-
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         Optional<Integer> id = extractId(req);

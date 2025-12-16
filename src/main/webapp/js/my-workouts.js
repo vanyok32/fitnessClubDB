@@ -45,7 +45,7 @@ async function loadMyWorkouts() {
 
     try {
         tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка тренировок...</td></tr>';
-        myWorkouts = await clientWorkoutsApi.getByClientId(clientId);
+        myWorkouts = await clientWorkoutsApi.get(clientId);
         renderMyWorkouts();
     } catch (error) {
         console.error('Error loading workouts:', error);
@@ -270,7 +270,7 @@ async function loadMembership() {
     }
 
     try {
-        const membership = await membershipsApi.getByClientId(clientId);
+        const membership = await membershipsApi.get(clientId);
         if (membership) {
             renderMembership(membership);
         } else {
@@ -357,6 +357,7 @@ function renderMembership(membership) {
         </div>
     `;
 }
+
 
 // ============================================
 // ИНИЦИАЛИЗАЦИЯ И ОБРАБОТЧИКИ СОБЫТИЙ

@@ -21,7 +21,7 @@ public class SpecializationRepository extends BaseRepositoryImpl<Specialization,
     private final String FIND_BY_NAME = """
             select id, name from fitness_club.specialization where name = ?""";
     private final String FIND_ALL = """
-            select * from fitness_club.specializations""";
+            select * from fitness_club.specialization""";
     private final String UPDATE_SQL = """
             update fitness_club.specialization set name = ? where id = ?""";
 

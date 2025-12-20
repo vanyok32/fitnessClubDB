@@ -30,9 +30,9 @@ function getClientId() {
 // ЗАГРУЗКА И ОТОБРАЖЕНИЕ ТРЕНИРОВОК
 // ============================================
 
-/**
- * Загрузка тренировок клиента
- */
+/*
+* Загрузка тренировок клиента
+*/
 async function loadMyWorkouts() {
     const tbody = document.getElementById('my-workouts-tbody');
     if (!tbody) return;
@@ -57,7 +57,10 @@ async function loadMyWorkouts() {
 /**
  * Отображение тренировок в таблице
  */
-function renderMyWorkouts() {
+/**
+ * Отображение тренировок в таблице (с асинхронной загрузкой имен тренеров, названий тренировок и отзывов по clientId)
+ */
+async function renderMyWorkouts() {
     const tbody = document.getElementById('my-workouts-tbody');
     if (!tbody) return;
 
@@ -66,30 +69,85 @@ function renderMyWorkouts() {
         return;
     }
 
-    tbody.innerHTML = myWorkouts.map(workout => {
-        const hasFeedback = workout.feedback && workout.feedback.rating;
-        const feedbackButton = hasFeedback
-            ? '<span style="color: #27ae60;">✓ Отзыв добавлен</span>'
-            : `<button class=\"btn btn-feedback\" data-schedule-id=\"${workout.id}\" type=\"button\">Добавить отзыв</button>`;
+    // --- Загружаем все отзывы для клиента за один раз ---
+    let allFeedbacks = [];
+    try {
+        // Используем clientId из глобальной переменной и передаём его как query параметр
+        allFeedbacks = await feedbacksApi.getAll({clientId: clientId});
+        console.log("Загруженные отзывы:", allFeedbacks);
+    } catch (error) {
+        console.error('Ошибка загрузки отзывов:', error);
+        // Можно вывести сообщение, но продолжить отрисовку без отзывов
+    }
 
-        const feedbackDisplay = hasFeedback
-            ? `<div style="padding: 0.5rem;">
-                <div><strong>Оценка:</strong> <span style="color: #f39c12;">${'★'.repeat(workout.feedback.rating)}${'☆'.repeat(5 - workout.feedback.rating)}</span> (${workout.feedback.rating}/5)</div>
-                ${workout.feedback.comment ? `<div style="margin-top: 0.5rem;"><strong>Комментарий:</strong> ${workout.feedback.comment}</div>` : ''}
-               </div>`
-            : '<span style="color: #999;">Нет отзыва</span>';
+    // --- Создаем мапу (карту) отзывов по scheduleId для быстрого доступа ---
+    const feedbackMap = new Map();
+    if (Array.isArray(allFeedbacks)) {
+        allFeedbacks.forEach(fb => {
+            // Убедитесь, что у объекта отзыва есть поле scheduleId
+            if (fb.scheduleId !== undefined) {
+                // Предполагается, что у одного schedule_id может быть только один отзыв
+                // Если логика позволяет несколько отзывов на schedule_id, используйте массив
+                feedbackMap.set(fb.scheduleId, fb);
+            }
+        });
+    }
+
+    // --- Создаем массив промисов для остальных данных (тренер, тренировка) ---
+    const promises = myWorkouts.map(async (workout) => {
+        let coachName = 'Неизвестен';
+        let workoutName = 'Неизвестна';
+
+        try {
+            const [coachData, workoutData] = await Promise.allSettled([
+                coachesApi.get(workout.coachId),
+                workoutsApi.get(workout.workoutId)
+            ]);
+
+            if (coachData.status === 'fulfilled' && coachData.value) {
+                coachName = coachData.value.name || 'Неизвестен';
+            } else {
+                console.error(`Ошибка загрузки тренера (ID ${workout.coachId}):`, coachData.reason || 'Данные недоступны');
+            }
+
+            if (workoutData.status === 'fulfilled' && workoutData.value) {
+                workoutName = workoutData.value.name || 'Неизвестна';
+            } else {
+                console.error(`Ошибка загрузки тренировки (ID ${workout.workoutId}):`, workoutData.reason || 'Данные недоступны');
+            }
+        } catch (err) {
+            console.error('Непредвиденная ошибка при загрузке данных для тренировки:', err);
+        }
+
+        // --- Получаем отзыв для текущей тренировки из мапы ---
+        const feedbackData = feedbackMap.get(workout.id); // workout.id это scheduleId
+        const hasFeedback = feedbackData && feedbackData.rating !== undefined;
+
+        let feedbackDisplay = '<span style="color: #999;">Нет отзыва</span>';
+        let feedbackButton = `<button class=\"btn btn-feedback\" data-schedule-id=\"${workout.id}\" type=\"button\">Добавить отзыв</button>`;
+
+        if (hasFeedback) {
+            feedbackButton = '<span style="color: #27ae60;">✓ Отзыв добавлен</span>';
+            feedbackDisplay = `<div style="padding: 0.5rem;">
+                <div><strong>Оценка:</strong> <span style="color: #f39c12; font-weight: bold;">${feedbackData.rating}/5</span></div>
+                ${feedbackData.comment ? `<div style="margin-top: 0.5rem;"><strong>Комментарий:</strong> ${feedbackData.comment}</div>` : ''}
+               </div>`;
+        }
 
         return `
         <tr>
             <td>${workout.id || '-'}</td>
-            <td>${workout.coachId || '-'}</td>
-            <td>${workout.workoutId || '-'}</td>
+            <td>${coachName}</td>
+            <td>${workoutName}</td>
             <td>${formatDate(workout.date) || '-'}</td>
             <td>${feedbackDisplay}</td>
             <td class="actions">${feedbackButton}</td>
         </tr>
         `;
-    }).join('');
+    });
+
+    const rowsHtml = await Promise.all(promises);
+    tbody.innerHTML = rowsHtml.join('');
 }
 
 // ============================================
@@ -323,19 +381,19 @@ function renderMembership(membership) {
     // Проверяем, не истек ли абонемент
     const endDateObj = membership.endDate ? new Date(membership.endDate) : null;
     const isExpired = endDateObj && endDateObj < new Date();
-    const actualStatus = isActive && !isExpired;
+    const actualStatus = membership.isActive ;//&& !isExpired;
 
     const statusClass = actualStatus ? 'success' : 'error';
-    const statusText = actualStatus ? 'Активен' : (isExpired ? 'Истек' : 'Неактивен');
+    const statusText = actualStatus ? 'Активен' : 'Истек';
     const statusIcon = actualStatus ? '✓' : '✗';
 
     membershipInfo.innerHTML = `
         <div class="card">
             <h3 style="color: #2c3e50; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
-                <span>Мой абонемент</span>
+                <!--<span>Мой абонемент</span>
                 <span class="message message-${statusClass}" style="margin-left: auto; padding: 0.25rem 0.75rem; font-size: 0.9rem;">
                     ${statusIcon} ${statusText}
-                </span>
+                </span>-->
             </h3>
             <table style="width: 100%; border-collapse: collapse;">
                 <tr style="border-bottom: 1px solid #eee;">
